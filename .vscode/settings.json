@@ -1,3 +1,5 @@
 {
     "github.copilot.chat.customInstructionsInSystemMessage": true,
+    "markdown.extension.tableFormatter.enabled": false,
+    "markdown.extension.toc.updateOnSave": false,
 }

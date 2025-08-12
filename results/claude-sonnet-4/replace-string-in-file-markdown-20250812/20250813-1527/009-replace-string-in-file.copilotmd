@@ -1,0 +1,132 @@
+# Tool Call - toolu_vrtx_01Ehacftiov8LaRTHRgjc4G6__vscode-1755030831237
+
+## Request
+~~~
+id   : toolu_vrtx_01Ehacftiov8LaRTHRgjc4G6__vscode-1755030831237
+tool : replace_string_in_file
+args : {
+  "filePath": "/Users/allengreaves/Projects/agreaves-ms/vscode-copilot-chat-example-issues/examples/claude-sonnet-4/replace-string-in-file-markdown-20250812/research-document.md",
+  "newString": "### AzureML Arc Extension Configuration (validated from Microsoft Learn)
+
+## 🤖 AzureML Model Training Integration
+
+Based on comprehensive research from Microsoft Learn documentation, Azure Machine Learning provides robust capabilities for model training that can be integrated with our Arc-enabled edge infrastructure. This section outlines how AzureML training workflows align with our edge component architecture.
+
+### Training Job Submission & Management
+
+**Core Training Workflow** (Source: [Microsoft Learn - Train models with Azure Machine Learning](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-train-model?view=azureml-api-2&tabs=azurecli)):
+
+Azure Machine Learning supports multiple training submission methods that can be leveraged in edge scenarios:
+
+1. **Azure CLI v2 (`ml` extension)**:
+   ```bash
+   # Connect to workspace with default configuration
+   az account set --subscription <subscription-id>
+   az configure --defaults workspace=<workspace-name> group=<resource-group>
+   
+   # Submit training job using YAML definition
+   run_id=$(az ml job create -f jobs/single-step/lightgbm/iris/job.yml --query name -o tsv)
+   az ml job show -n $run_id --web
+   ```
+
+2. **Python SDK v2**: Programmatic job submission and monitoring
+3. **REST API**: Direct API integration for custom workflows
+
+**Job Configuration Structure**:
+```yaml
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+code: src
+command: python main.py --iris-csv ${{inputs.iris_csv}}
+inputs:
+  iris_csv:
+    type: uri_file
+    path: https://azuremlexamples.blob.core.windows.net/datasets/iris.csv
+environment: azureml:AzureML-lightgbm-3.3@latest
+compute: azureml:cpu-cluster
+display_name: lightgbm-iris-example
+experiment_name: lightgbm-iris-example
+description: Train a LightGBM model on the Iris dataset
+```
+
+### Compute Resources & Scaling
+
+**Compute Options for Edge Integration**:
+
+1. **Azure Machine Learning Compute Clusters**:
+   ```bash
+   az ml compute create -n cpu-cluster --type amlcompute --min-instances 0 --max-instances 4
+   ```
+   - Fully managed compute resource
+   - Auto-scaling capabilities (0-4 instances)
+   - Integration with Arc-enabled Kubernetes clusters
+
+2. **Serverless Compute** (Preview):
+   - Skip compute cluster creation
+   - On-demand scaling
+   - Remove `compute: azureml:cpu-cluster` from job definitions
+
+3. **Arc-Enabled Kubernetes Integration**:
+   - Custom compute targets via `azurerm_machine_learning_inference_cluster`
+   - Edge compute utilization through Arc extension
+   - Private network connectivity maintained
+
+### MLflow Model Registration
+
+**Model Lifecycle Management**:
+
+Once training completes, models are registered using MLflow format:
+```bash
+az ml model create -n sklearn-iris-example -v 1 -p runs:/$run_id/model --type mlflow_model
+```
+
+**Key Benefits for Edge Scenarios**:
+- **Standardized Format**: MLflow models provide consistent packaging
+- **Version Control**: Semantic versioning for model deployments
+- **Metadata Tracking**: Experiment lineage and reproducibility
+- **Deployment Ready**: Direct integration with inference endpoints
+
+### Edge Training Considerations
+
+**Integration with Our Arc Component**:
+
+1. **Private Network Training**: 
+   - All training jobs respect `private-only connectivity` policy
+   - Workspace communication via private VNet/peering only
+   - No public internet access required for training workflows
+
+2. **SSL/TLS Security**:
+   - Training jobs leverage SSE-synced certificates
+   - Secure communication between edge clusters and cloud workspace
+   - Certificate rotation handled via Key Vault integration
+
+3. **Data Flow Architecture**:
+   ```mermaid
+   graph LR
+     EdgeData[(Edge Data Sources)] --> ArcCluster[Arc Kubernetes Cluster]
+     ArcCluster --> |Private VNet| AMLWorkspace[AML Workspace]
+     AMLWorkspace --> |Training Job| ComputeCluster[Compute Cluster]
+     ComputeCluster --> |MLflow Model| ModelRegistry[Model Registry]
+     ModelRegistry --> |Deployment| ArcCluster
+   ```
+
+4. **Component Integration Points**:
+   - **140-azureml**: Manages workspace configuration and Arc extension
+   - **110-iot-ops**: Provides Kubernetes resources for training job execution
+   - **SSE Integration**: Handles secure credential flow for training authentication
+
+**Operational Benefits**:
+- **Hybrid Training**: Execute training in cloud while deploying models to edge
+- **Consistent Tooling**: Same CLI/SDK/API across cloud and edge environments
+- **Security Compliance**: Maintains private connectivity and certificate management
+- **Scalability**: Auto-scaling compute resources based on training demands
+
+This integration enables organizations to leverage cloud-scale training capabilities while maintaining secure, private connectivity to edge inference environments.",
+  "oldString": "### AzureML Arc Extension Configuration (validated from Microsoft Learn)"
+}
+~~~
+## Response
+~~~
+The following files were successfully edited:
+/Users/allengreaves/Projects/agreaves-ms/vscode-copilot-chat-example-issues/examples/claude-sonnet-4/replace-string-in-file-markdown-20250812/research-document.md
+
+~~~

@@ -1,0 +1,25 @@
+# Tool Call - toolu_vrtx_018u9Ds4WH4gAfuv1256ZpyU__vscode-1755030831236
+
+## Request
+~~~
+id   : toolu_vrtx_018u9Ds4WH4gAfuv1256ZpyU__vscode-1755030831236
+tool : replace_string_in_file
+args : {
+  "filePath": "/Users/allengreaves/Projects/agreaves-ms/vscode-copilot-chat-example-issues/examples/claude-sonnet-4/replace-string-in-file-markdown-20250812/research-document.md",
+  "oldString": "  - [🔧 Technical Requirements \\& Configuration Matrix](#-technical-requirements--configuration-matrix)
+    - [AzureML Arc Extension Configuration (validated from Microsoft Learn)](#azureml-arc-extension-configuration-validated-from-microsoft-learn)",
+  "newString": "  - [🔧 Technical Requirements \\& Configuration Matrix](#-technical-requirements--configuration-matrix)
+    - [AzureML Arc Extension Configuration (validated from Microsoft Learn)](#azureml-arc-extension-configuration-validated-from-microsoft-learn)
+  - [🤖 AzureML Model Training Integration](#-azureml-model-training-integration)
+    - [Training Job Submission \\& Management](#training-job-submission--management)
+    - [Compute Resources \\& Scaling](#compute-resources--scaling)
+    - [MLflow Model Registration](#mlflow-model-registration)
+    - [Edge Training Considerations](#edge-training-considerations)"
+}
+~~~
+## Response
+~~~
+The following files were successfully edited:
+/Users/allengreaves/Projects/agreaves-ms/vscode-copilot-chat-example-issues/examples/claude-sonnet-4/replace-string-in-file-markdown-20250812/research-document.md
+
+~~~

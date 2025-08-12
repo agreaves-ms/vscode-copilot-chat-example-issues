@@ -1,0 +1,141 @@
+<!-- markdownlint-disable-file -->
+# Task Research Documents: AzureML Edge Arc Integration
+
+🎯 Comprehensive research to design a new Terraform-only edge component that integrates Azure Machine Learning with Arc-enabled Kubernetes. The component must mirror the cloud component structure, store AzureML SSL material as Key Vault secrets (in the edge component), and rely on Kubernetes resources (namespace, SecretProviderClass, SecretSync) applied by the IoT Operations edge component.
+
+## 📋 Policy Framework
+
+- **SSE-Only Policy**: This solution standardizes on the Azure Key Vault Secret Store extension (SSE) for secret synchronization. Other approaches (e.g., online-only AKV Secrets Provider) are out of scope.
+- **Private-Only Connectivity**: Only private VNet connectivity is supported. Public internet access to the AzureML workspace or Arc-exposed services (including `public_network_access_enabled = true` or LoadBalancer endpoints) is explicitly NOT supported. All endpoint exposure patterns MUST remain within private address spaces reachable via same VNet, peering, hub-spoke, or approved private connectivity (VPN/ExpressRoute) only.
+- **Security-First Design**: No secret values in Terraform outputs; TLS enabled by default; strict private connectivity; NodePort restricted via private NSGs/firewalls.
+
+## Table of Contents
+
+- [Task Research Documents: AzureML Edge Arc Integration](#task-research-documents-azureml-edge-arc-integration)
+  - [📋 Policy Framework](#-policy-framework)
+  - [Table of Contents](#table-of-contents)
+  - [Outline](#outline)
+  - [🔐 Security, Operational \& Advanced Considerations](#-security-operational--advanced-considerations)
+    - [Dependency Graph \& Ordering](#dependency-graph--ordering)
+    - [State \& Idempotency Considerations](#state--idempotency-considerations)
+    - [Security \& Least Privilege Controls](#security--least-privilege-controls)
+    - [Certificate Rotation Strategy](#certificate-rotation-strategy)
+    - [Extension Upgrade Strategy](#extension-upgrade-strategy)
+  - [Scope and Success Criteria](#scope-and-success-criteria)
+  - [🎯 Recommended Technical Solution](#-recommended-technical-solution)
+  - [🔧 Technical Requirements \& Configuration Matrix](#-technical-requirements--configuration-matrix)
+  - [🔑 Important Discoveries](#-important-discoveries)
+    - [✅ Validated Azure Provider Capabilities](#-validated-azure-provider-capabilities)
+    - [🏗️ Component Architecture Alignment](#️-component-architecture-alignment)
+    - [🔐 SSL and Kubernetes Integration (SSE-Only)](#-ssl-and-kubernetes-integration-sse-only)
+    - [🛡️ Private VNet Requirements](#️-private-vnet-requirements)
+  - [🔧 Technical Requirements \& Configuration Matrix](#-technical-requirements--configuration-matrix)
+    - [Items \& Other Config](#items--other-config)
+  - [Research Executed](#research-executed)
+    - [🔍 Technical Deep-Dive Validation (2025-08-10)](#-technical-deep-dive-validation-2025-08-10)
+    - [📋 Project Structure Validation](#-project-structure-validation)
+    - [🔗 IoT Operations Integration Requirements](#-iot-operations-integration-requirements)
+    - [🛡️ Network Security Policy Enforcement](#️-network-security-policy-enforcement)
+    - [📁 File Analysis Evidence](#-file-analysis-evidence)
+    - [🔎 Code Search Results](#-code-search-results)
+    - [📄 External Research Evidence Log](#-external-research-evidence-log)
+  - [🔧 Technical Requirements \& Configuration Matrix](#-technical-requirements--configuration-matrix)
+  - [🔑 Key Discoveries](#-key-discoveries)
+    - [✅ Validated Azure Provider Capabilities](#-validated-azure-provider-capabilities-1)
+    - [🏗️ Component Architecture Alignment](#️-component-architecture-alignment-1)
+    - [🔐 SSL and Kubernetes Integration (SSE-Only)](#-ssl-and-kubernetes-integration-sse-only-1)
+    - [🛡️ Private VNet Requirements](#️-private-vnet-requirements-1)
+  - [🔧 Technical Requirements \& Configuration Matrix](#-technical-requirements--configuration-matrix)
+    - [AzureML Arc Extension Configuration (validated from Microsoft Learn)](#azureml-arc-extension-configuration-validated-from-microsoft-learn)
+
+## Outline
+
+🎯 **Research Scope**: Design and validate a new Terraform-only edge component `src/100-edge/140-azureml/terraform` that integrates Azure Machine Learning with Arc-enabled Kubernetes, following established project patterns.
+
+🏗️ **Technical Architecture Validated**:
+- Arc extension resource (`azurerm_arc_kubernetes_cluster_extension`) with `Microsoft.AzureML.Kubernetes` type
+- Workspace attachment (`azurerm_machine_learning_inference_cluster`) for Arc cluster registration
+- SSL/TLS flow: Key Vault → SSE → Kubernetes Secret → AML Extension configuration
+- Component structure mirroring cloud AzureML component with edge-specific modules
+
+🔑 **Key Findings**:
+- All API versions and configuration keys confirmed from authoritative Microsoft Learn sources
+- SSE CRDs and secret synchronization patterns established and validated
+- Private VNet-only configuration requirements documented (public access excluded from scope)
+- Security-first defaults with private connectivity and NodePort service restriction
+
+✅ **Implementation Readiness**:
+- Dependencies identified and validated against existing components
+- Complete file structure and variable organization designed
+- Integration scripts pattern established for IoT Operations coordination
+- Network security options evaluated and selected
+
+## Scope and Success Criteria
+
+- **Scope**: Design a new Terraform edge component integrating Azure Machine Learning with Arc-enabled Kubernetes, including SSL management via Azure Key Vault and SSE, following established project patterns and conventions
+- **Exclusions**: Implementation/scaffolding (implementation planning only), alternative secret sync approaches (SSE-only policy), non-Terraform solutions
+- **Assumptions**:
+  - Arc cluster has OIDC issuer and workload identity enabled (provided by IoT Operations)
+  - Azure Key Vault and AML workspace exist as dependencies
+  - Private-only connectivity enforced: cloud workspace and Arc cluster communicate exclusively over private networks (same VNet, peered VNets, hub-spoke, or secured hybrid link)
+- **Success Criteria**:
+  - ✅ Technical validation of all Azure resources and API versions
+  - ✅ Complete component structure design following project conventions
+  - ✅ SSL/TLS flow documented with SSE integration pattern
+  - ✅ Private VNet-only configuration requirements established (public scenarios excluded)
+  - ✅ Implementation guidance with specific file structures and dependencies
+  - ✅ Network security patterns evaluated and selected
+  - ✅ All technical details backed by authoritative sources with proper references
+
+## 🎯 Recommended Technical Solution
+
+**Selected Architecture**: Create new component `src/100-edge/140-azureml/terraform` following established edge component patterns, with two internal modules and CI wrapper. Store SSL certificates in Key Vault via the 140-azureml component; deploy Kubernetes resources for azureml namespace via 110-iot-ops apply scripts (ServiceAccount, SecretProviderClass, SecretSync). Configure the AML extension with NodePort and TLS using SSE-synced secrets in private VNet scenarios only (no public exposure).
+
+**Key Design Decisions**:
+1. **SSE-Only Policy**: Standardize on Secret Store Extension vs. online-only AKV Secrets Provider for consistency with edge/offline scenarios
+2. **Private-Only Connectivity**: Public network access for the AML workspace and inference endpoints is not supported; `public_network_access_enabled` remains `false` always; exposure via internal private networking only
+3. **Component Separation**: Clear boundaries between Terraform (140-azureml) and Kubernetes manifests (110-iot-ops)
+4. **Security-First**: No secret values in Terraform outputs; TLS enabled by default; strict private connectivity; NodePort restricted via private NSGs/firewalls
+5. **Operational Simplicity**: Self-signed certificates supported for non-production inside private environments; production requires managed or externally provided certificates; automated sync via SSE
+
+**Implementation Readiness**: All technical dependencies validated, API versions confirmed, and integration patterns established from existing components.
+
+## 🔐 Security, Operational & Advanced Considerations
+
+### Dependency Graph & Ordering
+```mermaid
+graph TD
+  KV[(Key Vault)] --> TLSCerts{Optional TLS Generation}
+  TLSCerts --> KVSecrets[azurerm_key_vault_secret]
+  ArcCluster[(Arc Connected Cluster)] --> AMLArcExt[azurerm_arc_kubernetes_cluster_extension.azureml]
+  AMLWorkspace[(AML Workspace)] --> InferenceAttach[azurerm_machine_learning_inference_cluster.arc]
+  AMLArcExt --> InferenceAttach
+```
+
+**Key Dependencies**:
+- Extension must be deployed before compute target attachment
+- Key Vault secrets created independently of extension (SSE handles sync)
+- Apply scripts run after Terraform resources are provisioned
+
+### State & Idempotency Considerations
+- Pin provider versions in `versions.tf` to mitigate breaking changes
+- Avoid `count` for core modules to maintain output stability
+- Self-signed cert regeneration controlled via explicit variable changes
+- Use lifecycle management only when required by policy
+
+### Security & Least Privilege Controls
+- **No Secret Exposure**: Only secret names in outputs, never values
+- **Network Restrictions**: NodePort only (LoadBalancer validation prevents public exposure)
+- **RBAC Requirements**: Key Vault Secrets User role for SSE UAMI
+- **Private Connectivity**: All workspace communication via private networks only
+
+### Certificate Rotation Strategy
+**Operational Flow**:
+1. Admin updates cert/key in Key Vault (new secret versions)
+2. SSE automatically syncs latest enabled versions to cluster
+3. AML extension uses updated secrets (may require pod restart)
+
+**Implementation Notes**:
+- Stable secret names (no random suffixes)
+- No Terraform-managed rotation (manual Key Vault operations)
+- Self-signed certificates: re-apply to regenerate requires input changes

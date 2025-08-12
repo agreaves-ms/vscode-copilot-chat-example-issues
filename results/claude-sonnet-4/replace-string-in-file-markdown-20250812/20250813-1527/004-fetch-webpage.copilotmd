@@ -1,0 +1,343 @@
+# Tool Call - toolu_vrtx_018ZFTfnoJtrgfUpsZRw4xgi__vscode-1755030831235
+
+## Request
+~~~
+id   : toolu_vrtx_018ZFTfnoJtrgfUpsZRw4xgi__vscode-1755030831235
+tool : fetch_webpage
+args : {
+  "urls": [
+    "https://learn.microsoft.com/en-us/azure/machine-learning/how-to-train-model?view=azureml-api-2&tabs=azurecli"
+  ],
+  "query": "Azure Machine Learning model training, MLflow, compute targets, training jobs, data assets"
+}
+~~~
+## Response
+~~~
+Here is some relevant context from the web page https://learn.microsoft.com/en-us/azure/machine-learning/how-to-train-model?view%3Dazureml-api-2%26tabs%3Dazurecli:
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Prerequisites
+...
+### Clone the examples repository
+
+
+The code snippets in this article are based on examples in the [Azure Machine Learning examples GitHub repo](https://github.com/azure/azureml-examples). To clone the repository to your development environment, use the following
+command:
+
+ 
+```
+git clone --depth 1 https://github.com/Azure/azureml-examples
+
+```
+ 
+Tip
+
+
+Use `--depth 1` to clone only the latest commit to the repository, which reduces time to
+complete the operation.
+
+ Section titled: Example job
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Prerequisites
+
+
+• An Azure subscription. If you don't have an Azure subscription, create a free
+account before you begin. Try the [free or paid version of Azure Machine Learning](https://azure.microsoft.com/free/).
+• An Azure Machine Learning workspace. If you don't have one, you can use the
+steps in the [Create resources to get started](https://learn.microsoft.com/en-us/azure/machine-learning/quickstart-create-resources?view=azureml-api-2) article.
+
+ Python SDKAzure CLIREST API
+To use the CLI information, install the [Azure CLI and extension for machine learning](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-configure-cli?view=azureml-api-2).
+
+ Section titled: Clone the examples repository
+### Clone the examples repository
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Example job
+
+
+The examples in this article use the iris flower dataset to train an MLFlow
+model.
+
+ Section titled: Train in the cloud
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Train in the cloud
+...
+### 1. Connect to the workspace
+
+ 
+Tip
+
+
+Use the tabs below to select the method you want to use to train a model.
+Selecting a tab will automatically switch all the tabs in this article to the same
+tab. You can select another tab at any time.
+
+ Python SDKAzure CLIREST API
+When using the Azure CLI, you need identifier parameters - a subscription,
+resource group, and workspace name. While you can specify these parameters for each
+command, you can also set defaults that will be used for all the commands. Use
+the following commands to set default values. Replace `<subscription ID>`, `<Azure Machine Learning workspace name>`, and `<resource group>` with the values for your configuration:
+
+ 
+```
+az account set --subscription <subscription ID>
+az configure --defaults workspace=<Azure Machine Learning workspace name> group=<resource group>
+
+```
+ Section titled: 2. Create a compute resource for training
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Train in the cloud
+...
+### 2. Create a compute resource for training
+
+ 
+Note
+
+
+To try [serverless compute](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-use-serverless-compute?view=azureml-api-2), skip this step and proceed to 3. Submit the training job.
+
+
+An Azure Machine Learning compute cluster is a fully managed compute resource
+that can be used to run the training job. In the following examples, a compute
+cluster named `cpu-compute` is created.
+
+ Python SDKAzure CLIREST API 
+```
+az ml compute create -n cpu-cluster --type amlcompute --min-instances 0 --max-instances 4
+
+```
+ Section titled: 3. Submit the training job
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Train in the cloud
+...
+### 3. Submit the training job
+
+ Python SDKAzure CLIREST API
+The `az ml job create` command used in this example requires a YAML job definition file. The contents
+of the file used in this example are:
+
+ 
+Note
+
+
+To use [serverless compute](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-use-serverless-compute?view=azureml-api-2), delete `compute: azureml:cpu-cluster"` in this code.
+
+ 
+```
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+code: src
+command: >-
+  python main.py
+  --iris-csv ${{inputs.iris_csv}}
+inputs:
+  iris_csv:
+    type: uri_file
+    path: https://azuremlexamples.blob.core.windows.net/datasets/iris.csv
+environment: azureml:AzureML-lightgbm-3.3@latest
+compute: azureml:cpu-cluster
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Train in the cloud
+...
+### 3. Submit the training job
+...
+display_name: lightgbm-iris-example
+experiment_name: lightgbm-iris-example
+description: Train a LightGBM model on the Iris dataset.
+
+```
+
+In the above, you configured:
+
+
+• `code` - path where the code to run the command is located
+• `command` - command that needs to be run
+• `inputs` - dictionary of inputs using name value pairs to the command. The key is a name
+for the input within the context of the job and the value is the input value.
+Inputs are referenced in the `command` using the `${{inputs.<input_name>}}` expression. For more information, see [SDK and CLI v2 expressions](https://learn.microsoft.com/en-us/azure/machine-learning/concept-expressions?view=azureml-api-2).
+• `environment` - the environment needed to run the training script. In this example, we use a
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Train in the cloud
+...
+### 3. Submit the training job
+...
+curated or ready-made environment provided by Azure Machine Learning called `AzureML-lightgbm-3.3`. We use the latest version of this environment by using the `@latest` directive. You can also use custom environments by specifying a base docker
+image and specifying a conda yaml on top of it. To submit the job, use the
+following command. The run ID (name) of the training job is stored in the `$run_id` variable:
+
+ 
+```
+run_id=$(az ml job create -f jobs/single-step/lightgbm/iris/job.yml --query name -o tsv)
+
+```
+
+You can use the stored run ID to return information about the job. The `--web` parameter opens the Azure Machine Learning studio web UI where you can drill
+into details on the job:
+
+
+```
+az ml job show -n $run_id --web
+
+```
+ Section titled: Register the trained model
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Train in the cloud
+
+
+When training in the cloud, you must connect to your Azure Machine Learning
+workspace and select a compute resource that will be used to run the training job.
+
+ Section titled: 1. Connect to the workspace
+### 1. Connect to the workspace
+...
+### 2. Create a compute resource for training
+...
+### 3. Submit the training job
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Register the trained model
+
+
+The following examples demonstrate how to register a model in your Azure Machine
+Learning workspace.
+
+ Python SDKAzure CLIREST API 
+Tip
+
+
+The name (stored in the `$run_id` variable) is used as part of the path to the model.
+
+ 
+```
+az ml model create -n sklearn-iris-example -v 1 -p runs:/$run_id/model --type mlflow_model
+
+```
+ Section titled: Next steps
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Next steps
+
+
+Now that you have a trained model, learn [how to deploy it using an online endpoint](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-deploy-online-endpoints?view=azureml-api-2).
+
+
+For more examples, see the [Azure Machine Learning examples](https://github.com/azure/azureml-examples) GitHub repository.
+
+
+For more information on the Azure CLI commands, Python SDK classes, or REST APIs
+used in this article, see the following reference documentation:
+
+
+• [Azure CLI ml extension](https://learn.microsoft.com/en-us/cli/azure/ml)
+• [Python SDK](https://learn.microsoft.com/en-us/python/api/azure-ai-ml/azure.ai.ml)
+• [REST API](https://learn.microsoft.com/en-us/rest/api/azureml/)
+
+  
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Feedback
+
+
+Was this page helpful?
+
+YesNo [Content language selector. Currently set to English (United States).](https://learn.microsoft.com/en-us/locale?target=https%3A%2F%2Flearn.microsoft.com%2Fen-us%2Fazure%2Fmachine-learning%2Fhow-to-train-model%3Fview%3Dazureml-api-2%26tabs%3Dazurecli) [Your Privacy Choices](https://aka.ms/yourcaliforniaprivacychoices) Theme
+[AI Disclaimer](https://learn.microsoft.com/en-us/principles-for-ai-generated-content)
+[Previous Versions](https://learn.microsoft.com/en-us/previous-versions/)
+[Blog](https://techcommunity.microsoft.com/t5/microsoft-learn-blog/bg-p/MicrosoftLearnBlog)
+[Contribute](https://learn.microsoft.com/en-us/contribute)
+[Privacy](https://go.microsoft.com/fwlink/?LinkId=521839)
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Feedback
+...
+[Terms of Use](https://learn.microsoft.com/en-us/legal/termsofuse)
+[Trademarks](https://www.microsoft.com/legal/intellectualproperty/Trademarks/)
+© Microsoft 2025
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Additional Links
+- [Learn](https://learn.microsoft.com/en-us/?view=azureml-api-2)
+- [Azure](https://learn.microsoft.com/en-us/azure/index/?view=azureml-api-2)
+- [Machine Learning](https://learn.microsoft.com/en-us/azure/machine-learning/?view=azureml-api-2)
+- [Prerequisites](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-train-model?view=azureml-api-2&tabs=azurecli#prerequisites)
+- [Example job](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-train-model?view=azureml-api-2&tabs=azurecli#example-job)
+- [Train in the cloud](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-train-model?view=azureml-api-2&tabs=azurecli#train-in-the-cloud)
+...
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+## Additional Links
+...
+- [Register the trained model](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-train-model?view=azureml-api-2&tabs=azurecli#register-the-trained-model)
+- [Next steps](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-train-model?view=azureml-api-2&tabs=azurecli#next-steps)
+...
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+
+ 
+10/07/2024
+
+
+APPLIES TO:  [Azure CLI ml extension v2 (current)](https://learn.microsoft.com/en-us/azure/machine-learning/how-to-configure-cli?view=azureml-api-2)  [Python SDK azure-ai-ml v2 (current)](https://aka.ms/sdk-v2-install)
+
+
+Azure Machine Learning provides multiple ways to submit ML training jobs. In
+this article, you'll learn how to submit jobs using the following methods:
+
+
+• Azure CLI extension for machine learning: The `ml` extension, also referred to as CLI v2.
+• Python SDK v2 for Azure Machine Learning.
+• REST API: The API that the CLI and SDK are built on.
+
+ Section titled: Prerequisites
+## Prerequisites
+...
+## Example job
+...
+## Train in the cloud
+...
+## Register the trained model
+...
+## Next steps
+...
+## Feedback
+...
+## Additional Links
+...
+ Skip to main contentSkip to Ask Learn chat experience         Ask Learn
+# Train models with Azure Machine Learning CLI, SDK, and REST API
+...
+~~~
