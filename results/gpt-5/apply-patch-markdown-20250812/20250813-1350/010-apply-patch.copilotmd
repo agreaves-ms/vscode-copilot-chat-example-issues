@@ -1,0 +1,79 @@
+# Tool Call - call_tZhSqcpBUA3fsJGzCqJ7FGc0__vscode-1755030831220
+
+## Request
+~~~
+id   : call_tZhSqcpBUA3fsJGzCqJ7FGc0__vscode-1755030831220
+tool : apply_patch
+args : {
+  "explanation": "Insert detailed Additional Thoughts content for 3333 section.",
+  "input": "*** Begin Patch
+*** Update File: /Users/allengreaves/Projects/agreaves-ms/vscode-copilot-chat-example-issues/examples/gpt-5/apply-patch-markdown-20250812/research-document.md
+@@
+-### Additional Thoughts
+-
+-### 🔐 SSL and Kubernetes Integration (SSE-Only)
++### Additional Thoughts
++
++These forward-looking considerations focus on Day-2 reliability, security reinforcement, and operational simplicity specific to the edge AzureML extension scenario (distinct from earlier 1 / 2222 phases):
++
++1. Secret Lifecycle & Rotation
++   - Establish rotation cadence (e.g., 90 days) for self-signed certs; pipeline job: terraform taint cert module → apply → verify SSE secret hash change.
++   - Future: optional AKV Certificate object (vs discrete secrets) once provider supports streamlined export for edge consumption.
++   - Drift probe: compare SHA256 of Kubernetes secret cert against latest Key Vault version; alert if mismatch persists > grace window.
++
++2. Extension Configuration Guardrails
++   - Terraform validation to constrain `inferenceRouterServiceType` = `NodePort` (policy enforcement for private-only posture).
++   - Minimal variable surface: expose only version pin, enableInference, enableTraining, ssl flags; hide advanced toggles until justified.
++   - Version pin with documented upgrade + rollback path (force replace if schema drift encountered).
++
++3. Failure Mode Mitigations
++   - Secret sync lag: pre-flight wait (exponential backoff) for secret keys before creating extension.
++   - Partial apply avoidance: explicit depends_on chain + readiness script gating.
++   - Private DNS misconfig: helper script resolves AML endpoints, asserts RFC1918 / approved CIDR before success mark.
++
++4. Observability Enhancements
++   - Label extension pods (`component=azureml-edge`) for targeted log & metric aggregation in 120-observability.
++   - Terraform output (non-sensitive) of Key Vault secret version used → aids audit traceability.
++   - Post-deploy synthetic HTTPS probe (curl NodePort) validating 200 + CN match + latency baseline capture.
++
++5. Security Reinforcements
++   - Namespace NetworkPolicy: default deny + scoped egress (observability + control plane) once IoT Ops seeds policies.
++   - Ensure no legacy service account token reliance (workload identity only) reducing credential sprawl.
++   - Plan migration to RBAC-only Key Vault (remove explicit access policies) when provider parity fully stable.
++
++6. Operational Runbooks (Seed)
++   - Rotation: regen → KV update → SSE propagation check (hash) → restart router pod if no live reload.
++   - Upgrade: bump version → plan diff review → canary edge site → phased rollout → fleet completion.
++   - Rollback: revert version var → apply (replace) → validate health + synthetic probe.
++
++7. Testing Layers
++   - Static: terraform validate + custom policy checks (serviceType, public access flags, identity presence).
++   - Template lint: CI renders Kubernetes manifest templates (envsubst dry-run) verifying no placeholder leakage.
++   - Conformance: post-apply script asserts (a) secret keys present, (b) extension Healthy, (c) NodePort unreachable externally.
++
++8. Drift & Compliance Monitoring
++   - Scheduled read-only terraform plan; publish diff summary for security dashboard.
++   - Store canonical hash of `configuration_settings` JSON; recompute per apply to catch silent portal edits.
++
++9. Backlog / Enhancements
++   - Managed cert acquisition (ACME private CA) for large fleets.
++   - Zero-downtime extension upgrade (staggered pod restart) if future dual-version support emerges.
++   - OPA/Gatekeeper policies enforcing NodePort + namespace isolation invariants.
++
++10. Assumptions Requiring Validation Pre-GA
++   - SSE propagation P95 latency < 2 minutes (empirical measurement phase).
++   - NodePort strictly private (validated via controlled external scan in staging).
++   - All extension cloud calls satisfied via workload identity (no fallback secret mounts found in logs).
++
++Summary: Feasibility confirmed; focus shifts to codifying guardrails (validation + drift detection), automating cert lifecycle, and embedding health probes for low-touch Day-2 operations.
++
++### 🔐 SSL and Kubernetes Integration (SSE-Only)
+*** End Patch"
+}
+~~~
+## Response
+~~~
+The following files were successfully edited:
+/Users/allengreaves/Projects/agreaves-ms/vscode-copilot-chat-example-issues/examples/gpt-5/apply-patch-markdown-20250812/research-document.md
+
+~~~

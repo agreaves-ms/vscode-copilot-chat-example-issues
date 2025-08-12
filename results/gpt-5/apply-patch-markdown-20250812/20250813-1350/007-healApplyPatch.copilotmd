@@ -1,0 +1,562 @@
+> 🚨 Note: This log may contain personal information such as the contents of your files or terminal output. Please review the contents carefully before sharing.
+# healApplyPatch - 30f6a7f4
+
+## Metadata
+~~~
+requestType      : ChatCompletions
+model            : gpt-4o-mini
+maxPromptTokens  : 12285
+maxResponseTokens: 4096
+location         : 6
+postOptions      : {"temperature":0.1,"top_p":1,"max_tokens":4096,"n":1,"stream":true}
+intent           : undefined
+startTime        : 2025-08-12T20:48:34.133Z
+endTime          : 2025-08-12T20:48:40.907Z
+duration         : 6774ms
+ourRequestId     : bdd8950b-2e54-447e-8041-d2840bb208af
+requestId        : bdd8950b-2e54-447e-8041-d2840bb208af
+serverRequestId  : bdd8950b-2e54-447e-8041-d2840bb208af
+timeToFirstToken : 675ms
+usage            : {"completion_tokens":1028,"completion_tokens_details":{"accepted_prediction_tokens":0,"rejected_prediction_tokens":0},"prompt_tokens":7305,"prompt_tokens_details":{"cached_tokens":0},"total_tokens":8333}
+~~~
+## Request Messages
+### System
+~~~md
+You are an expert in file editing. The user has provided a patch that failed to apply because it references context that was not found precisely in the file. Your task is to fix the patch so it can be applied successfully.<patchFormat>
+The expected format for the patch is a diff format that modifications and include contextual lines around the changes. The patch should be formatted as follows:
+*** Update File: [file_path]
+[context_before] -> See below for further instructions on context.
+-[old_code] -> Precede each line in the old code with a minus sign.
++[new_code] -> Precede each line in the new, replacement code with a plus sign.
+[context_after] -> See below for further instructions on context.
+
+For instructions on [context_before] and [context_after]:
+- By default, show 3 lines of code immediately above and 3 lines immediately below each change. If a change is within 3 lines of a previous change, do NOT duplicate the first change's [context_after] lines in the second change's [context_before] lines.
+- If 3 lines of context is insufficient to uniquely identify the snippet of code within the file, use the @@ operator to indicate the class or function to which the snippet belongs.
+- If a code block is repeated so many times in a class or function such that even a single @@ statement and 3 lines of context cannot uniquely identify the snippet of code, you can use multiple `@@` statements to jump to the right context.
+You must use the same indentation style as the original code. If the original code uses tabs, you must use tabs. If the original code uses spaces, you must use spaces. Be sure to use a proper UNESCAPED tab character.
+
+See below for an example of the patch format. If you propose changes to multiple regions in the same file, you should repeat the *** Update File header for each snippet of code to change:
+
+*** Begin Patch
+*** Update File: /Users/someone/pygorithm/searching/binary_search.py
+@@ class BaseClass
+@@   def method():
+[3 lines of pre-context]
+-[old_code]
++[new_code]
++[new_code]
+[3 lines of post-context]
+*** End Patch
+The output MUST NOT actually include the string "[3 lines of pre-context]" or "[3 lines of post-context]" -- include the actual lines of context from the file. An example of a patch you might generate is shown below.
+
+```
+*** Begin Patch
+*** Update File: /Users/someone/pygorithm/searching/binary_search.py
+@@ class BaseClass
+@@     def search():
+         results = get_results()
+-        results
++        return results
+@@ class Subclass
+@@     def search():
+-        pass
++        raise NotImplementedError()
+*** End Patch
+```
+
+</patchFormat>
+<instructions>
+1. Think carefully. Examine the provided patch, the included intent, the contents of the files it references.
+2. Determine the locations in the files where the user intended the patch to be applied. Lines that don't begin with a plus "+" or "-" sign must be found verbatim in the original file, and ONLY lines to be added or removed should begin with a plus or minus sign respectively. It is very likely this rule is being broken by the invalid patch.
+3. Generate the ENTIRE corrected patch. Do not omit anything.
+
+</instructions>
+
+~~~
+
+### User
+~~~md
+The goal of the patch is: Add detailed Additional Thoughts content specifically under 3333 Key Discoveries section.
+
+The patch I want to apply is:
+<invalidPatch>
+
+*** Begin Patch
+*** Update File: /Users/allengreaves/Projects/agreaves-ms/vscode-copilot-chat-example-issues/examples/gpt-5/apply-patch-markdown-20250812/research-document.md
+@@
+ ### Additional Thoughts
++
++These forward-looking considerations extend beyond feasibility and focus on Day-2 reliability, security hardening, and operational simplicity specific to the edge AzureML integration context.
++
++1. Secret Lifecycle & Rotation
++   - Define rotation cadence (e.g., 90 days) for self-signed certs; pipeline job: terraform taint cert module → apply → verify SSE synced secret hash.
++   - Future: optional AKV Certificate object support once provider export semantics stabilize (reduces manual cert/key pairing).
++   - Add drift probe: compare SHA256 of Kubernetes secret cert against latest Key Vault version; alert on mismatch.
++
++2. Extension Configuration Guardrails
++   - Enforce `NodePort` only via terraform `validation` block; reject `LoadBalancer` / `ClusterIP` for edge policy.
++   - Minimize variable surface (hide rarely used toggles) to reduce config entropy; expose version + enableInference + enableTraining + ssl flags.
++   - Pin extension version; document controlled upgrade + rollback path (reapply previous version with forced replacement if schema drift).
++
++3. Failure Mode Mitigations
++   - Secret sync lag: pre-flight wait loop (kubectl get secret ... retry with backoff) before applying extension resource.
++   - Partial apply: explicit `depends_on` chain + script-level readiness gate prevents extension creation without TLS secret.
++   - DNS misconfiguration for private endpoints: diagnostic helper to resolve AML FQDN ensuring private IP range (RFC1918) before success mark.
++
++4. Observability Enhancements
++   - Tag extension pods (`component=azureml-edge`) for log routing in 120-observability.
++   - Emit Key Vault secret version (non-sensitive) as output for audit trace (no secret material).
++   - Post-deploy synthetic: curl NodePort HTTPS expecting 200 + CN match; record latency baseline.
++
++5. Security Reinforcements
++   - Namespace NetworkPolicy: default deny + allow intra-namespace + observability egress once IoT Ops provides baseline CRDs.
++   - Verify ServiceAccount token projection not required (workload identity path only) to reduce credential surface.
++   - Transition to RBAC-only Key Vault access (remove legacy access policies) when feature parity is confirmed, reducing policy churn.
++
++6. Operational Runbooks (Seed)
++   - Rotation: generate → store in KV → wait for SSE → confirm secret hash → restart router pod if no live reload.
++   - Upgrade: bump version var → plan (review diff) → canary edge site → staged rollout → full fleet.
++   - Rollback: revert version var → apply with replace; confirm health probe + synthetic passes.
++
++7. Testing Layers
++   - Static: terraform validate + custom policy checks (serviceType, public access flags, identity presence).
++   - Template lint: CI renders Kubernetes manifests (envsubst dry-run) ensuring no unresolved placeholders.
++   - Conformance: Post-apply script asserts (a) secret keys present, (b) extension status Healthy, (c) NodePort not advertised externally.
++
++8. Drift & Compliance Monitoring
++   - Scheduled read-only plan detects manual portal edits; publish diff summary to security dashboard.
++   - Store canonical JSON hash of extension `configuration_settings` in state output; recompute each apply to catch silent drift.
++
++9. Backlog / Enhancements
++   - Optional managed cert acquisition (ACME private CA) for fleet scale.
++   - Zero-downtime extension upgrade (staggered rollout) if future dual-version support emerges.
++   - OPA/Gatekeeper policies enforcing NodePort + namespace isolation invariants.
++
++10. Assumptions to Validate Pre-GA
++   - SSE propagation latency SLO (e.g., P95 < 2m) empirically measured.
++   - NodePort strictly private—validated via external network scan in staging environment.
++   - Workload identity fully covers extension cloud calls (no fallback secret mounts observed in logs).
++
++Summary: No blockers; readiness hinges on codifying guardrails (validation + drift detection) and automating cert lifecycle plus health verification to ensure low-touch Day-2 operations.
++
+ ### 🔐 SSL and Kubernetes Integration (SSE-Only)
+*** End Patch
+
+</invalidPatch>
+
+
+The referenced files are:
+```
+<!-- markdownlint-disable-file -->
+# Task Research Documents: AzureML Edge Arc Integration
+
+🎯 Comprehensive research to design a new Terraform-only edge component that integrates Azure Machine Learning with Arc-enabled Kubernetes. The component must mirror the cloud component structure, store AzureML SSL material as Key Vault secrets (in the edge component), and rely on Kubernetes resources (namespace, SecretProviderClass, SecretSync) applied by the IoT Operations edge component.
+
+## 📋 Policy Framework
+
+- **SSE-Only Policy**: This solution standardizes on the Azure Key Vault Secret Store extension (SSE) for secret synchronization. Other approaches (e.g., online-only AKV Secrets Provider) are out of scope.
+- **Private-Only Connectivity**: Only private VNet connectivity is supported. Public internet access to the AzureML workspace or Arc-exposed services (including `public_network_access_enabled = true` or LoadBalancer endpoints) is explicitly NOT supported. All endpoint exposure patterns MUST remain within private address spaces reachable via same VNet, peering, hub-spoke, or approved private connectivity (VPN/ExpressRoute) only.
+- **Security-First Design**: No secret values in Terraform outputs; TLS enabled by default; strict private connectivity; NodePort restricted via private NSGs/firewalls.
+
+## Table of Contents
+
+- [Task Research Documents: AzureML Edge Arc Integration](#task-research-documents-azureml-edge-arc-integration)
+  - [📋 Policy Framework](#-policy-framework)
+  - [Table of Contents](#table-of-contents)
+  - [Outline](#outline)
+  - [Scope and Success Criteria](#scope-and-success-criteria)
+  - [🎯 Recommended Technical Solution](#-recommended-technical-solution)
+  - [🔑 Important Discoveries](#-important-discoveries)
+    - [✅ Validated Azure Provider Capabilities](#-validated-azure-provider-capabilities)
+    - [🏗️ Component Architecture Alignment](#️-component-architecture-alignment)
+    - [🔐 SSL and Kubernetes Integration (SSE-Only)](#-ssl-and-kubernetes-integration-sse-only)
+    - [🛡️ Private VNet Requirements](#️-private-vnet-requirements)
+  - [1 - 🔑 Key Discoveries](#1----key-discoveries)
+    - [✅ Validated Azure Provider Capabilities](#-validated-azure-provider-capabilities-1)
+    - [🏗️ Component Architecture Alignment](#️-component-architecture-alignment-1)
+    - [🔐 SSL and Kubernetes Integration (SSE-Only)](#-ssl-and-kubernetes-integration-sse-only-1)
+    - [🛡️ Private VNet Requirements](#️-private-vnet-requirements-1)
+  - [Research Executed](#research-executed)
+    - [🔍 Technical Deep-Dive Validation (2025-08-10)](#-technical-deep-dive-validation-2025-08-10)
+    - [📋 Project Structure Validation](#-project-structure-validation)
+    - [🔗 IoT Operations Integration Requirements](#-iot-operations-integration-requirements)
+    - [🛡️ Network Security Policy Enforcement](#️-network-security-policy-enforcement)
+    - [📁 File Analysis Evidence](#-file-analysis-evidence)
+    - [🔎 Code Search Results](#-code-search-results)
+    - [📄 External Research Evidence Log](#-external-research-evidence-log)
+  - [🔑 Original Discoveries](#-original-discoveries)
+    - [✅ Validated Azure Provider Capabilities](#-validated-azure-provider-capabilities-2)
+    - [🏗️ Component Architecture Alignment](#️-component-architecture-alignment-2)
+    - [Additional Thoughts](#additional-thoughts)
+    - [🔐 SSL and Kubernetes Integration (SSE-Only)](#-ssl-and-kubernetes-integration-sse-only-2)
+    - [🛡️ Private VNet Requirements](#️-private-vnet-requirements-2)
+  - [2222 - 🔑 Key Discoveries](#2222----key-discoveries)
+    - [✅ Validated Azure Provider Capabilities](#-validated-azure-provider-capabilities-3)
+    - [🏗️ Component Architecture Alignment](#️-component-architecture-alignment-3)
+    - [Additional Thoughts](#additional-thoughts-1)
+    - [🔐 SSL and Kubernetes Integration (SSE-Only)](#-ssl-and-kubernetes-integration-sse-only-3)
+    - [🛡️ Private VNet Requirements](#️-private-vnet-requirements-3)
+  - [3333 - 🔑 Key Discoveries](#3333----key-discoveries)
+    - [✅ Validated Azure Provider Capabilities](#-validated-azure-provider-capabilities-4)
+    - [🏗️ Component Architecture Alignment](#️-component-architecture-alignment-4)
+    - [Additional Thoughts](#additional-thoughts-2)
+    - [🔐 SSL and Kubernetes Integration (SSE-Only)](#-ssl-and-kubernetes-integration-sse-only-4)
+    - [🛡️ Private VNet Requirements](#️-private-vnet-requirements-4)
+
+## Outline
+
+🎯 **Research Scope**: Design and validate a new Terraform-only edge component `src/100-edge/140-azureml/terraform` that integrates Azure Machine Learning with Arc-enabled Kubernetes, following established project patterns.
+
+🏗️ **Technical Architecture Validated**:
+- Arc extension resource (`azurerm_arc_kubernetes_cluster_extension`) with `Microsoft.AzureML.Kubernetes` type
+- Workspace attachment (`azurerm_machine_learning_inference_cluster`) for Arc cluster registration
+- SSL/TLS flow: Key Vault → SSE → Kubernetes Secret → AML Extension configuration
+- Component structure mirroring cloud AzureML component with edge-specific modules
+
+🔑 **Key Findings**:
+- All API versions and configuration keys confirmed from authoritative Microsoft Learn sources
+- SSE CRDs and secret synchronization patterns established and validated
+- Private VNet-only configuration requirements documented (public access excluded from scope)
+- Security-first defaults with private connectivity and NodePort service restriction
+
+✅ **Implementation Readiness**:
+- Dependencies identified and validated against existing components
+- Complete file structure and variable organization designed
+- Integration scripts pattern established for IoT Operations coordination
+- Network security options evaluated and selected
+
+## Scope and Success Criteria
+
+- **Scope**: Design a new Terraform edge component integrating Azure Machine Learning with Arc-enabled Kubernetes, including SSL management via Azure Key Vault and SSE, following established project patterns and conventions
+- **Exclusions**: Implementation/scaffolding (implementation planning only), alternative secret sync approaches (SSE-only policy), non-Terraform solutions
+- **Assumptions**:
+  - Arc cluster has OIDC issuer and workload identity enabled (provided by IoT Operations)
+  - Azure Key Vault and AML workspace exist as dependencies
+  - Private-only connectivity enforced: cloud workspace and Arc cluster communicate exclusively over private networks (same VNet, peered VNets, hub-spoke, or secured hybrid link)
+- **Success Criteria**:
+  - ✅ Technical validation of all Azure resources and API versions
+  - ✅ Complete component structure design following project conventions
+  - ✅ SSL/TLS flow documented with SSE integration pattern
+  - ✅ Private VNet-only configuration requirements established (public scenarios excluded)
+  - ✅ Implementation guidance with specific file structures and dependencies
+  - ✅ Network security patterns evaluated and selected
+  - ✅ All technical details backed by authoritative sources with proper references
+
+## 🎯 Recommended Technical Solution
+
+**Selected Architecture**: Create new component `src/100-edge/140-azureml/terraform` following established edge component patterns, with two internal modules and CI wrapper. Store SSL certificates in Key Vault via the 140-azureml component; deploy Kubernetes resources for azureml namespace via 110-iot-ops apply scripts (ServiceAccount, SecretProviderClass, SecretSync). Configure the AML extension with NodePort and TLS using SSE-synced secrets in private VNet scenarios only (no public exposure).
+
+**Key Design Decisions**:
+1. **SSE-Only Policy**: Standardize on Secret Store Extension vs. online-only AKV Secrets Provider for consistency with edge/offline scenarios
+2. **Private-Only Connectivity**: Public network access for the AML workspace and inference endpoints is not supported; `public_network_access_enabled` remains `false` always; exposure via internal private networking only
+3. **Component Separation**: Clear boundaries between Terraform (140-azureml) and Kubernetes manifests (110-iot-ops)
+4. **Security-First**: No secret values in Terraform outputs; TLS enabled by default; strict private connectivity; NodePort restricted via private NSGs/firewalls
+5. **Operational Simplicity**: Self-signed certificates supported for non-production inside private environments; production requires managed or externally provided certificates; automated sync via SSE
+
+**Implementation Readiness**: All technical dependencies validated, API versions confirmed, and integration patterns established from existing components.
+
+## 🔑 Important Discoveries
+
+### ✅ Validated Azure Provider Capabilities
+- **Arc Extension Deployment**: Use `azurerm_arc_kubernetes_cluster_extension` with `extension_type = "Microsoft.AzureML.Kubernetes"`, `identity { type = "SystemAssigned" }`, and `configuration_settings` for all AzureML configuration
+- **Compute Attachment**: `azurerm_machine_learning_inference_cluster` attaches Arc cluster to workspace using `kubernetes_cluster_id`; SSL handled at extension level, not attachment level
+
+### 🏗️ Component Architecture Alignment
+- **Edge Component Structure**: `src/100-edge/140-azureml/terraform` mirrors cloud `000-cloud/080-azureml` with two internal modules:
+  - `modules/azureml-extension-arc`: Encapsulates `azurerm_arc_kubernetes_cluster_extension`
+  - `modules/compute-target-attachment`: Encapsulates `azurerm_machine_learning_inference_cluster`
+- **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+
+### 🔐 SSL and Kubernetes Integration (SSE-Only)
+- **Edge Component (140-azureml)**: Owns TLS materials generation (optional) and Key Vault secret storage (cert/key)
+- **IoT Ops (110-iot-ops)**: Owns Kubernetes manifests via apply scripts (azureml namespace, ServiceAccount, SecretProviderClass, SecretSync)
+- **Extension Integration**: Uses `sslSecret` and `sslCname` configuration settings for TLS-enabled scenarios
+
+### 🛡️ Private VNet Requirements
+- **Cloud Workspace**: `public_network_access_enabled = false` enforced for edge scenarios
+- **Network Isolation**: Support for `managed_network.isolation_mode = "AllowOnlyApprovedOutbound"`
+- **Private Endpoints**: DNS zones `privatelink.api.azureml.ms` and `privatelink.notebooks.azure.net` for commercial cloud
+
+## 1 - 🔑 Key Discoveries
+
+### ✅ Validated Azure Provider Capabilities
+- **Arc Extension Deployment**: Use `azurerm_arc_kubernetes_cluster_extension` with `extension_type = "Microsoft.AzureML.Kubernetes"`, `identity { type = "SystemAssigned" }`, and `configuration_settings` for all AzureML configuration
+- **Compute Attachment**: `azurerm_machine_learning_inference_cluster` attaches Arc cluster to workspace using `kubernetes_cluster_id`; SSL handled at extension level, not attachment level
+
+### 🏗️ Component Architecture Alignment
+- **Edge Component Structure**: `src/100-edge/140-azureml/terraform` mirrors cloud `000-cloud/080-azureml` with two internal modules:
+  - `modules/azureml-extension-arc`: Encapsulates `azurerm_arc_kubernetes_cluster_extension`
+  - `modules/compute-target-attachment`: Encapsulates `azurerm_machine_learning_inference_cluster`
+    - **Root Module (1)**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+      - **Root Module (2)**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+- **Root Module (3)**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+
+### 🔐 SSL and Kubernetes Integration (SSE-Only)
+- **Edge Component (140-azureml)**: Owns TLS materials generation (optional) and Key Vault secret storage (cert/key)
+- **IoT Ops (110-iot-ops)**: Owns Kubernetes manifests via apply scripts (azureml namespace, ServiceAccount, SecretProviderClass, SecretSync)
+- **Extension Integration**: Uses `sslSecret` and `sslCname` configuration settings for TLS-enabled scenarios
+
+### 🛡️ Private VNet Requirements
+- **Cloud Workspace**: `public_network_access_enabled = false` enforced for edge scenarios
+- **Network Isolation**: Support for `managed_network.isolation_mode = "AllowOnlyApprovedOutbound"`
+- **Private Endpoints**: DNS zones `privatelink.api.azureml.ms` and `privatelink.notebooks.azure.net` for commercial cloud
+
+## Research Executed
+
+### 🔍 Technical Deep-Dive Validation (2025-08-10)
+
+**AzureML Extension Configuration Matrix** (validated from Microsoft Learn):
+- **Extension Configuration Complete**: All configuration keys confirmed from authoritative Microsoft Learn sources
+  - `enableTraining` and `enableInference`: **Required** - Must be set to `True` explicitly for respective workloads
+  - `inferenceRouterServiceType`: **Required when enableInference=True** - Valid values: `LoadBalancer`, `NodePort`, `ClusterIP`
+  - `allowInsecureConnections`: Optional, default `False` - Set to `True` only for dev/test HTTP scenarios
+  - `sslSecret`: **Required when allowInsecureConnections=False** - Must reference Kubernetes Secret name in `azureml` namespace
+  - `sslCname`: **Required when allowInsecureConnections=False** - TLS/SSL CNAME for HTTPS endpoint
+  - `nodeSelector.*`: Optional - Format `nodeSelector.key1=value1` for workload placement restrictions
+
+**Terraform Provider Resource Validation** (Provider 4.39.0):
+- **azurerm_arc_kubernetes_cluster_extension**: API Microsoft.KubernetesConfiguration 2024-11-01
+- **azurerm_machine_learning_inference_cluster**: API Microsoft.ContainerService 2025-02-01, Microsoft.MachineLearningServices 2025-06-01
+  - Purpose: Attaches existing Kubernetes cluster to ML workspace (does NOT create cluster)
+  - For Arc clusters: Use `kubernetes_cluster_id` of Arc-connected cluster resource
+  - SSL handling: `ssl` block is AKS-focused; for Arc, TLS handled at extension level
+- **azurerm_machine_learning_workspace**: API Microsoft.MachineLearningServices 2025-06-01
+
+**Secret Store Extension (SSE) Validation**:
+- Extension type: `microsoft.azure.secretstore`
+- Two CRDs: `SecretProviderClass` and `SecretSync`
+- Secret shape: Opaque type with `cert.pem` and `key.pem` keys in `azureml` namespace
+- SecretSync creates Kubernetes secret automatically when using SSE
+
+### 📋 Project Structure Validation
+
+**Component Organization** (validated against existing patterns):
+- **Edge Component**: `src/100-edge/140-azureml/` follows established patterns from 110-iot-ops and 120-observability
+- **Naming Convention**: Decimal sequence (140 for model management deployment order)
+- **Module Structure**: Two internal modules required: `azureml-extension-arc` and `compute-target-attachment`
+- **Apply Scripts Integration**: IoT Ops pattern extended for AzureML namespace and SSE resources
+
+**Variable Organization Patterns** (from existing edge components):
+- `variables.deps.tf`: Required dependency objects with type definitions
+- `variables.core.tf`: Core naming and instance configuration
+- `variables.flags.tf`: Feature flags (SSL, training, inference)
+- `variables.ext.tf`: Extension configuration (service type, HA, version, release train)
+
+### 🔗 IoT Operations Integration Requirements
+
+**Apply Scripts Enhancement**:
+- New script required for azureml namespace, ServiceAccount, SecretProviderClass, and SecretSync
+- Template from existing `apply-trust.sh` pattern with kubectl and envsubst
+- Environment variables: `TF_SSE_USER_ASSIGNED_CLIENT_ID`, `TF_KEY_VAULT_NAME`, `TF_AZURE_TENANT_ID`
+
+**Federated Identity Credentials**:
+- Existing SSE UAMI needs additional FIC for `azureml-ssc-sa` in `azureml` namespace
+- Subject format: `system:serviceaccount:azureml:azureml-ssc-sa`
+- Pattern follows existing workload identity integration in IoT Operations component
+
+### 🛡️ Network Security Policy Enforcement
+
+**Private-Only Connectivity** (policy confirmed):
+- `inferenceRouterServiceType` restricted to `NodePort` only (validation enforced)
+- No `LoadBalancer` support to prevent accidental public exposure
+- AML workspace `public_network_access_enabled = false` (hard requirement)
+- All endpoint access via private networking (VNet, peering, VPN/ExpressRoute only)
+
+### 📁 File Analysis Evidence
+- `src/100-edge/110-iot-ops/terraform/modules/iot-ops-init/main.tf`
+  - Uses multiple `azurerm_arc_kubernetes_cluster_extension` resources with SystemAssigned identity and configuration settings, confirming pattern for Arc extensions (L24–L38, L40–L57, L59–L70, L72–L86)
+- `src/100-edge/120-observability/terraform/modules/cluster-extensions-obs/main.tf`
+  - Manages `azurerm_arc_kubernetes_cluster_extension` with `configuration_settings`, providing template for extension module structure
+- `src/000-cloud/080-azureml/terraform/modules/inference-cluster-integration/main.tf`
+  - Implements `azurerm_machine_learning_inference_cluster` for AKS attach; SSL block uses leaf-domain pattern for AKS (L13–L25)
+- `src/000-cloud/080-azureml/terraform/modules/workspace/main.tf`
+  - AML workspace sets `public_network_access_enabled = var.public_network_access_enabled` with identity (L17–L29)
+
+### 🔎 Code Search Results
+- **Arc Extensions**: Used extensively in edge components (110-iot-ops, 120-observability) with consistent patterns
+- **ML Inference Cluster**: Present in cloud AzureML module with AKS-focused SSL options
+- **ML Workspace**: Provider supports private networking configuration options
+
+### 📄 External Research Evidence Log
+
+**AzureRM Provider Documentation**:
+- **Arc Extension Resource**: Configuration settings, identity requirements, API provider Microsoft.KubernetesConfiguration 2024-11-01
+- **ML Inference Cluster**: Attach semantics for existing clusters, API providers Microsoft.ContainerService 2025-02-01, Microsoft.MachineLearningServices 2025-06-01
+- **ML Workspace**: Private networking options, managed network isolation modes, API provider Microsoft.MachineLearningServices 2025-06-01
+
+**Microsoft Learn Documentation**:
+- **SSE Configuration**: SecretProviderClass and SecretSync CRD creation patterns, troubleshooting guidance
+- **AML Extension TLS**: Required secret shape (Opaque type with cert.pem/key.pem keys in azureml namespace)
+- **Workload Identity**: ServiceAccount annotation patterns and federated identity credential subject formats
+- **Private Networking**: Private endpoint subresources and DNS zone requirements (privatelink.api.azureml.ms)
+
+**Project Conventions Validation**:
+- Terraform and shell script standards from `.github/instructions/` applied
+- Component structure patterns validated against existing edge components
+- Variable organization following established 100-edge component conventions
+
+## 🔑 Original Discoveries
+
+### ✅ Validated Azure Provider Capabilities
+- **Arc Extension Deployment**: Use `azurerm_arc_kubernetes_cluster_extension` with `extension_type = "Microsoft.AzureML.Kubernetes"`, `identity { type = "SystemAssigned" }`, and `configuration_settings` for all AzureML configuration
+- **Compute Attachment**: `azurerm_machine_learning_inference_cluster` attaches Arc cluster to workspace using `kubernetes_cluster_id`; SSL handled at extension level, not attachment level
+
+### 🏗️ Component Architecture Alignment
+- **Edge Component Structure**: `src/100-edge/140-azureml/terraform` mirrors cloud `000-cloud/080-azureml` with two internal modules:
+  - `modules/azureml-extension-arc`: Encapsulates `azurerm_arc_kubernetes_cluster_extension`
+  - `modules/compute-target-attachment`: Encapsulates `azurerm_machine_learning_inference_cluster`
+    - **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+      - **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+- **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+
+### Additional Thoughts
+
+### 🔐 SSL and Kubernetes Integration (SSE-Only)
+- **Edge Component (140-azureml)**: Owns TLS materials generation (optional) and Key Vault secret storage (cert/key)
+- **IoT Ops (110-iot-ops)**: Owns Kubernetes manifests via apply scripts (azureml namespace, ServiceAccount, SecretProviderClass, SecretSync)
+- **Extension Integration**: Uses `sslSecret` and `sslCname` configuration settings for TLS-enabled scenarios
+
+### 🛡️ Private VNet Requirements
+- **Cloud Workspace**: `public_network_access_enabled = false` enforced for edge scenarios
+- **Network Isolation**: Support for `managed_network.isolation_mode = "AllowOnlyApprovedOutbound"`
+- **Private Endpoints**: DNS zones `privatelink.api.azureml.ms` and `privatelink.notebooks.azure.net` for commercial cloud
+
+
+## 2222 - 🔑 Key Discoveries
+
+### ✅ Validated Azure Provider Capabilities
+- **Arc Extension Deployment**: Use `azurerm_arc_kubernetes_cluster_extension` with `extension_type = "Microsoft.AzureML.Kubernetes"`, `identity { type = "SystemAssigned" }`, and `configuration_settings` for all AzureML configuration
+- **Compute Attachment**: `azurerm_machine_learning_inference_cluster` attaches Arc cluster to workspace using `kubernetes_cluster_id`; SSL handled at extension level, not attachment level
+
+### 🏗️ Component Architecture Alignment
+- **Edge Component Structure**: `src/100-edge/140-azureml/terraform` mirrors cloud `000-cloud/080-azureml` with two internal modules:
+  - `modules/azureml-extension-arc`: Encapsulates `azurerm_arc_kubernetes_cluster_extension`
+  - `modules/compute-target-attachment`: Encapsulates `azurerm_machine_learning_inference_cluster`
+    - **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+      - **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+- **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+
+### Additional Thoughts
+
+### 🔐 SSL and Kubernetes Integration (SSE-Only)
+- **Edge Component (140-azureml)**: Owns TLS materials generation (optional) and Key Vault secret storage (cert/key)
+- **IoT Ops (110-iot-ops)**: Owns Kubernetes manifests via apply scripts (azureml namespace, ServiceAccount, SecretProviderClass, SecretSync)
+- **Extension Integration**: Uses `sslSecret` and `sslCname` configuration settings for TLS-enabled scenarios
+
+### 🛡️ Private VNet Requirements
+- **Cloud Workspace**: `public_network_access_enabled = false` enforced for edge scenarios
+- **Network Isolation**: Support for `managed_network.isolation_mode = "AllowOnlyApprovedOutbound"`
+- **Private Endpoints**: DNS zones `privatelink.api.azureml.ms` and `privatelink.notebooks.azure.net` for commercial cloud
+
+## 3333 - 🔑 Key Discoveries
+
+### ✅ Validated Azure Provider Capabilities
+- **Arc Extension Deployment**: Use `azurerm_arc_kubernetes_cluster_extension` with `extension_type = "Microsoft.AzureML.Kubernetes"`, `identity { type = "SystemAssigned" }`, and `configuration_settings` for all AzureML configuration
+- **Compute Attachment**: `azurerm_machine_learning_inference_cluster` attaches Arc cluster to workspace using `kubernetes_cluster_id`; SSL handled at extension level, not attachment level
+
+### 🏗️ Component Architecture Alignment
+- **Edge Component Structure**: `src/100-edge/140-azureml/terraform` mirrors cloud `000-cloud/080-azureml` with two internal modules:
+  - `modules/azureml-extension-arc`: Encapsulates `azurerm_arc_kubernetes_cluster_extension`
+  - `modules/compute-target-attachment`: Encapsulates `azurerm_machine_learning_inference_cluster`
+    - **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+      - **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+- **Root Module**: Handles naming locals, optional TLS generation, Key Vault secret creation, module orchestration, and outputs
+
+### Additional Thoughts
+
+### 🔐 SSL and Kubernetes Integration (SSE-Only)
+- **Edge Component (140-azureml)**: Owns TLS materials generation (optional) and Key Vault secret storage (cert/key)
+- **IoT Ops (110-iot-ops)**: Owns Kubernetes manifests via apply scripts (azureml namespace, ServiceAccount, SecretProviderClass, SecretSync)
+- **Extension Integration**: Uses `sslSecret` and `sslCname` configuration settings for TLS-enabled scenarios
+
+### 🛡️ Private VNet Requirements
+- **Cloud Workspace**: `public_network_access_enabled = false` enforced for edge scenarios
+- **Network Isolation**: Support for `managed_network.isolation_mode = "AllowOnlyApprovedOutbound"`
+- **Private Endpoints**: DNS zones `privatelink.api.azureml.ms` and `privatelink.notebooks.azure.net` for commercial cloud
+```
+~~~
+
+
+
+## Response
+### Assistant
+~~~md
+Here is the corrected patch that can be applied successfully to the specified file. The patch includes the necessary context lines to ensure that the changes can be accurately identified and applied.
+
+```
+*** Begin Patch
+*** Update File: /Users/allengreaves/Projects/agreaves-ms/vscode-copilot-chat-example-issues/examples/gpt-5/apply-patch-markdown-20250812/research-document.md
+@@ -1,3 +1,3 @@
+ ### Additional Thoughts
++
++These forward-looking considerations extend beyond feasibility and focus on Day-2 reliability, security hardening, and operational simplicity specific to the edge AzureML integration context.
++
++1. Secret Lifecycle & Rotation
++   - Define rotation cadence (e.g., 90 days) for self-signed certs; pipeline job: terraform taint cert module → apply → verify SSE synced secret hash.
++   - Future: optional AKV Certificate object support once provider export semantics stabilize (reduces manual cert/key pairing).
++   - Add drift probe: compare SHA256 of Kubernetes secret cert against latest Key Vault version; alert on mismatch.
++
++2. Extension Configuration Guardrails
++   - Enforce `NodePort` only via terraform `validation` block; reject `LoadBalancer` / `ClusterIP` for edge policy.
++   - Minimize variable surface (hide rarely used toggles) to reduce config entropy; expose version + enableInference + enableTraining + ssl flags.
++   - Pin extension version; document controlled upgrade + rollback path (reapply previous version with forced replacement if schema drift).
++
++3. Failure Mode Mitigations
++   - Secret sync lag: pre-flight wait loop (kubectl get secret ... retry with backoff) before applying extension resource.
++   - Partial apply: explicit `depends_on` chain + script-level readiness gate prevents extension creation without TLS secret.
++   - DNS misconfiguration for private endpoints: diagnostic helper to resolve AML FQDN ensuring private IP range (RFC1918) before success mark.
++
++4. Observability Enhancements
++   - Tag extension pods (`component=azureml-edge`) for log routing in 120-observability.
++   - Emit Key Vault secret version (non-sensitive) as output for audit trace (no secret material).
++   - Post-deploy synthetic: curl NodePort HTTPS expecting 200 + CN match; record latency baseline.
++
++5. Security Reinforcements
++   - Namespace NetworkPolicy: default deny + allow intra-namespace + observability egress once IoT Ops provides baseline CRDs.
++   - Verify ServiceAccount token projection not required (workload identity path only) to reduce credential surface.
++   - Transition to RBAC-only Key Vault access (remove legacy access policies) when feature parity is confirmed, reducing policy churn.
++
++6. Operational Runbooks (Seed)
++   - Rotation: generate → store in KV → wait for SSE → confirm secret hash → restart router pod if no live reload.
++   - Upgrade: bump version var → plan (review diff) → canary edge site → staged rollout → full fleet.
++   - Rollback: revert version var → apply with replace; confirm health probe + synthetic passes.
++
++7. Testing Layers
++   - Static: terraform validate + custom policy checks (serviceType, public access flags, identity presence).
++   - Template lint: CI renders Kubernetes manifests (envsubst dry-run) ensuring no unresolved placeholders.
++   - Conformance: Post-apply script asserts (a) secret keys present, (b) extension status Healthy, (c) NodePort not advertised externally.
++
++8. Drift & Compliance Monitoring
++   - Scheduled read-only plan detects manual portal edits; publish diff summary to security dashboard.
++   - Store canonical JSON hash of extension `configuration_settings` in state output; recompute each apply to catch silent drift.
++
++9. Backlog / Enhancements
++   - Optional managed cert acquisition (ACME private CA) for fleet scale.
++   - Zero-downtime extension upgrade (staggered rollout) if future dual-version support emerges.
++   - OPA/Gatekeeper policies enforcing NodePort + namespace isolation invariants.
++
++10. Assumptions to Validate Pre-GA
++   - SSE propagation latency SLO (e.g., P95 < 2m) empirically measured.
++   - NodePort strictly private—validated via external network scan in staging environment.
++   - Workload identity fully covers extension cloud calls (no fallback secret mounts observed in logs).
++
++Summary: No blockers; readiness hinges on codifying guardrails (validation + drift detection) and automating cert lifecycle plus health verification to ensure low-touch Day-2 operations.
++
+ ### 🔐 SSL and Kubernetes Integration (SSE-Only)
+*** End Patch
+``` 
+
+This patch now includes the necessary context lines before and after the changes, ensuring it can be applied correctly to the specified section of the markdown file.
+~~~
+
+
+<style>
+[id^="system"], [id^="user"], [id^="assistant"] {
+		margin: 4px 0 4px 0;
+}
+
+.markdown-body > pre {
+		padding: 4px 16px;
+}
+</style>

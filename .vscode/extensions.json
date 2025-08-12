@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        // GitHub & Version Control
+        "github.copilot",
+        "github.copilot-chat"
+    ]
+}
