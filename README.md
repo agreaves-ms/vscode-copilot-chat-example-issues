@@ -39,3 +39,21 @@ Contrived example with read_file -> fetch -> replace_string_in_file resulting in
 - [File Being Worked On](./results/claude-sonnet-4/replace-string-in-file-markdown-20250812/20250813-1527/research-document.md)
 - [Result](./results/claude-sonnet-4/replace-string-in-file-markdown-20250812/20250813-1527/research-document.result.md)
 - [**Captured Logs README**](./results/claude-sonnet-4/replace-string-in-file-markdown-20250812/20250813-1527/README.md)
+
+---
+
+### claude-sonnet-4/multi-replace-string-in-file-markdown-20250814
+
+[claude-sonnet-4/multi-replace-string-in-file-markdown-20250814](./examples/claude-sonnet-4/multi-replace-string-in-file-markdown-20250814)
+
+Example demonstrating issues with multi_replace_string_in_file where newString and oldString appear correct but the resulting change removes newlines from the markdown file.
+
+**Demonstrates**:
+
+- Issues with the multi_replace_string_in_file string operation removing newlines despite correct newString and oldString parameters.
+
+**Logs**:
+
+- [Chat Conversation](./results/claude-sonnet-4/multi-replace-string-in-file-markdown-20250814/000-chat-conversation.md)
+- [File Being Worked On](./results/claude-sonnet-4/multi-replace-string-in-file-markdown-20250814/20250811-mlops-ros2-robot-edge-architecture-research.md)
+- [**Captured Logs README**](./results/claude-sonnet-4/multi-replace-string-in-file-markdown-20250814/README.md)
